@@ -3,6 +3,7 @@ https://pytorch.org/functorch/stable/notebooks/neural_tangent_kernels.html
 """
 
 import functools
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,11 +18,12 @@ from tqdm import tqdm
 from mobilenetv2 import MobileNetV2
 from utils.clip_grad_norm import clip_grad_norm_
 
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 DATA_DIR = "/home/tejasj/data"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-BASIS_SIZE = 10
+BASIS_SIZE = 20
 LEARNING_RATE = 0.01
+TOTAL_ITERS = 50_000
 
 
 class EnergyNet(MobileNetV2):
@@ -111,9 +113,7 @@ def fisher_matrix_vector(model, params, basis, samples, option=2):
         raise ValueError("NaNs encountered in JVP")
 
     # This computes u(x)^T @ V and \mu^T @ V
-    u1, mean = torch.chunk(jvp_outs.detach(), 2, dim=1)
-    # Compute U_x^T @ V = u(x)^T @ V - \mu^T @ V
-    u = u1 - torch.mean(mean, dim=1, keepdim=True)  # (BASIS_SIZE, B // 2)
+    u, mean = torch.chunk(jvp_outs.detach(), 2, dim=1)  # (BASIS_SIZE, B // 2)
 
     # We ultimately need to compute \E [(U_x @ U_x^T) @ V], which can be done by solving
     # \E [(u(x) - \mu) @ (u(x) - \mu)^T @ V]. Note that this is equivalent to computing
@@ -214,23 +214,43 @@ if __name__ == "__main__":
 
     # pool = multiprocessing.Pool()
 
-    for i, samples in tqdm(enumerate(dataloader)):
-        samples = samples[0].to(DEVICE)
-        vjp_outs = fisher_matrix_vector(model, params, basis, samples)
-        gradient = dict(map(map_gradient, zip(vjp_outs.items(), basis.items())))
-        clip_grad_norm_(gradient, 10.0)
+    step = 0
 
-        with torch.no_grad():
-            for k in basis.keys():
-                if torch.isnan(gradient[k]).any():
-                    raise ValueError(f"NaNs encountered in gradient[{k}]")
-                new_val = basis[k] - LEARNING_RATE * gradient[k]
-                basis[k].copy_(new_val)
+    while True:
+        for i, samples in tqdm(enumerate(dataloader)):
+            samples = samples[0].to(DEVICE)
+            vjp_outs = fisher_matrix_vector(model, params, basis, samples)
+            gradient = dict(map(map_gradient, zip(vjp_outs.items(), basis.items())))
+            clip_grad_norm_(gradient, 100.0)
 
-        if i % 50 == 0:
-            fig, ax = plt.subplots()
-            spectrum = compute_spectrum(gradient)
-            ax.plot(compute_spectrum(gradient))
-            writer.add_figure("spectrum", fig, i)
+            with torch.no_grad():
+                for k in basis.keys():
+                    if torch.isnan(gradient[k]).any():
+                        raise ValueError(f"NaNs encountered in gradient[{k}]")
+                    new_val = basis[k] - LEARNING_RATE * gradient[k]
+                    basis[k].copy_(new_val)
+
+            if step % 50 == 0:
+                fig, ax = plt.subplots()
+                spectrum = compute_spectrum(gradient)
+                ax.plot(compute_spectrum(gradient))
+                writer.add_figure("spectrum", fig, step)
+
+            if step % 5000 == 0:
+                if not os.path.exists(
+                    "/home/tejasj/data/neural_fisher_kernel/checkpoints/mobilenet_v2_l_20"
+                ):
+                    os.makedirs(
+                        "/home/tejasj/data/neural_fisher_kernel/checkpoints/mobilenet_v2_l_20"
+                    )
+                torch.save(
+                    basis,
+                    f"/home/tejasj/data/neural_fisher_kernel/checkpoints/mobilenet_v2_l_20/basis_{step}.pt",
+                )
+
+            if step >= TOTAL_ITERS:
+                exit(0)
+
+            step += 1
 
     # pool.close()
