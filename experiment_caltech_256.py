@@ -12,21 +12,25 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from torchvision.datasets import CIFAR10
+from torchvision.datasets import Caltech256
 from tqdm import tqdm
-
-from mobilenetv2 import MobileNetV2
+from torchvision.models import (
+    mobilenet_v3_large,
+    MobileNet_V3_Large_Weights,
+    MobileNetV3,
+)
+from torchvision.models.mobilenetv3 import _mobilenet_v3_conf
 from utils.clip_grad_norm import clip_grad_norm_
 
 BATCH_SIZE = 32
 DATA_DIR = "/home/tejasj/data"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-BASIS_SIZE = 20
+BASIS_SIZE = 10
 LEARNING_RATE = 0.01
 TOTAL_ITERS = 50_000
 
 
-class EnergyNet(MobileNetV2):
+class EnergyNet(MobileNetV3):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -39,14 +43,17 @@ class EnergyNet(MobileNetV2):
         return torch.sum(probs.detach() * out, dim=-1)
 
 
-def energynet(pretrained=False, device="cpu", **kwargs):
-    model = EnergyNet(**kwargs)
-    if pretrained:
-        state_dict = torch.load(
-            "/home/tejasj/data2/PyTorch_CIFAR10/cifar10_models/state_dicts/mobilenet_v2.pt",
-            map_location=device,
-        )
-        model.load_state_dict(state_dict)
+def energynet():
+    original_model = mobilenet_v3_large(
+        weights=MobileNet_V3_Large_Weights.IMAGENET1K_V2
+    )
+    state_dict = original_model.state_dict()
+    inverted_residual_setting, last_channel = _mobilenet_v3_conf("mobilenet_v3_large")
+    model = EnergyNet(
+        inverted_residual_setting=inverted_residual_setting, last_channel=last_channel
+    )
+    model.load_state_dict(state_dict)
+    print("Total parameters:", sum(p.numel() for p in model.parameters()))
     return model
 
 
@@ -183,17 +190,12 @@ if __name__ == "__main__":
     # multiprocessing.set_start_method("spawn")
 
     # Create a summary writer
-    writer = SummaryWriter(log_dir="/home/tejasj/data/neural_fisher_kernel/runs/exp")
-
-    transform = T.Compose(
-        [
-            T.RandomCrop(32, padding=4),
-            T.RandomHorizontalFlip(),
-            T.ToTensor(),
-            T.Normalize((0.4914, 0.4822, 0.4465), (0.2471, 0.2435, 0.2616)),
-        ]
+    writer = SummaryWriter(
+        log_dir="/home/tejasj/data/neural_fisher_kernel/runs/exp_caltech_256"
     )
-    dataset = CIFAR10(root=DATA_DIR, train=True, transform=transform)
+
+    transform = MobileNet_V3_Large_Weights.IMAGENET1K_V2.transforms()
+    dataset = Caltech256(root=DATA_DIR, transform=transform)
     dataloader = DataLoader(
         dataset,
         batch_size=BATCH_SIZE,
@@ -203,7 +205,7 @@ if __name__ == "__main__":
     )
 
     # Get the model parameters
-    model = energynet(pretrained=True).to(DEVICE)
+    model = energynet().to(DEVICE)
     model.eval()
     params = dict(model.named_parameters())
 
@@ -238,14 +240,14 @@ if __name__ == "__main__":
 
             if step % 5000 == 0:
                 if not os.path.exists(
-                    "/home/tejasj/data/neural_fisher_kernel/checkpoints/mobilenet_v2_l_20"
+                    "/home/tejasj/data/neural_fisher_kernel/checkpoints/mobilenet_v3_l_20"
                 ):
                     os.makedirs(
-                        "/home/tejasj/data/neural_fisher_kernel/checkpoints/mobilenet_v2_l_20"
+                        "/home/tejasj/data/neural_fisher_kernel/checkpoints/mobilenet_v3_l_20"
                     )
                 torch.save(
                     basis,
-                    f"/home/tejasj/data/neural_fisher_kernel/checkpoints/mobilenet_v2_l_20/basis_{step}.pt",
+                    f"/home/tejasj/data/neural_fisher_kernel/checkpoints/mobilenet_v3_l_20/basis_{step}.pt",
                 )
 
             if step >= TOTAL_ITERS:
