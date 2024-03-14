@@ -15,7 +15,7 @@ class Finetune_Net(nn.Module):
 
     def forward(self, x):
         for key in self.basis_param.keys():  # Iterate over the keys of the parameter subsets
-            updated_param = self.pretrained_param[key] + self.principle_coeff(self.basis_param[key].T)
+            updated_param = self.pretrained_param[key] + self.principle_coeff(self.basis_param[key]).squeeze(0)
             self.base_model.state_dict()[key].data.copy_(updated_param)
 
         return self.base_model(x)
