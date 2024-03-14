@@ -49,7 +49,10 @@ if __name__ == "__main__":
     trainset, valset, testset, trainloader, valloader, testloader = data_processing.get_dataloader()
 
     # Get the model parameters
-    model_path = configs.dataset_path+'state_dicts/mobilenet_v2.pt'
+    if configs.model_name == 'MobileNet':
+        model_path = configs.dataset_path+'state_dicts/mobilenet_v2.pt'
+    else:
+        raise NotImplementedError
     model = energynet(configs.model_name, model_path, pretrained=True).to(DEVICE)
     model.eval()
     saving_path = os.path.join(
@@ -58,9 +61,7 @@ if __name__ == "__main__":
         f'_dataset_{configs.dataset_name}'
         f'_basis_size_{configs.basis_size}'
         f'_option_{configs.option}'
-        f'_seed_{str(configs.seed)}'
     )
-    saving_path = configs.root_path+"checkpoints/mobilenet_v2_l_20"
 
     # Create the basis
     params = dict(model.named_parameters())
