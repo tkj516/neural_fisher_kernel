@@ -13,12 +13,13 @@ class Finetune_Net(nn.Module):
         self.pretrained_param = pretrained_param
         self.basis_param = basis_param
         self.principle_coeff = nn.Linear(configs.basis_size, 1, bias=False)
+        self.updated_param = {key: self.pretrained_param[key].clone() for key in self.pretrained_param.keys()}
 
     def forward(self, x):
         for key in self.basis_param.keys():  # Iterate over the keys of the parameter subsets
-            updated_param = self.pretrained_param[key] \
+            self.updated_param[key] = self.pretrained_param[key] \
             + self.principle_coeff(torch.stack([self.basis_param[key][i] for i in range(self.configs.basis_size)], -1)).squeeze(-1)
-            self.base_model.state_dict()[key].data.copy_(updated_param)
+        self.base_model.load_state_dict(self.updated_param, strict=False)
 
         return self.base_model(x)
 
