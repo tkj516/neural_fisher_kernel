@@ -25,6 +25,7 @@ parser = argparse.ArgumentParser(description='main function')
 parser.add_argument('--dataset_path', type=str, default='/dccstor/mitibm_uq/data/')
 parser.add_argument('--root_path', type=str, default='/dccstor/mitibm_uq/neural_fisher_kernel/')
 parser.add_argument('--dataset_name', default='CIFAR10', type=str, help='dataset to run')
+parser.add_argument('--model_name', default='MobileNet', type=str, help='model to train')
 parser.add_argument('--batch_size', type=int, default=32, help="batch_size for training the model")
 parser.add_argument('--basis_size', type=int, default=20, help="number of principle basis")
 parser.add_argument('--lr', type=float, default=1e-2, help="learning rate")
@@ -49,8 +50,16 @@ if __name__ == "__main__":
 
     # Get the model parameters
     model_path = configs.dataset_path+'state_dicts/mobilenet_v2.pt'
-    model = energynet(model_path, pretrained=True).to(DEVICE)
+    model = energynet(configs.model_name, model_path, pretrained=True).to(DEVICE)
     model.eval()
+    saving_path = os.path.join(
+        configs.root_path+'checkpoints',
+        f'model_{configs.model_name}'
+        f'_dataset_{configs.dataset_name}'
+        f'_basis_size_{configs.basis_size}'
+        f'_option_{configs.option}'
+        f'_seed_{str(configs.seed)}'
+    )
     saving_path = configs.root_path+"checkpoints/mobilenet_v2_l_20"
 
     # Create the basis
