@@ -20,7 +20,7 @@ class Finetune_Net(nn.Module):
 
         return self.base_model(x)
 
-def fintunenet(configs, model_path, basis_path, device, **kwargs):
+def finetunenet(configs, model_path, basis_path, device, **kwargs):
     pretrained_param = torch.load(model_path, map_location=device)
     basis_param = torch.load(basis_path, map_location=device)
     model = Finetune_Net(configs, pretrained_param, basis_param, **kwargs)
