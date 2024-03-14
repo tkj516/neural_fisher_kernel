@@ -8,8 +8,8 @@ class Finetune_Net(nn.Module):
         super(Finetune_Net, self).__init__()
         self.configs = configs
         self.base_model = MODEL_MAPPING[configs.model_name](**kwargs)
-        for param in self.base_model.parameters():
-            param.requires_grad = False
+        #for param in self.base_model.parameters():
+        #    param.requires_grad = False
         self.pretrained_param = pretrained_param
         self.basis_param = basis_param
         self.principle_coeff = nn.Linear(configs.basis_size, 1, bias=False)
