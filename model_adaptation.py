@@ -22,6 +22,7 @@ parser.add_argument('--model_name', default='MobileNet', type=str, help='model t
 parser.add_argument('--batch_size', type=int, default=32, help="batch_size for training the model")
 parser.add_argument('--basis_size', type=int, default=20, help="number of principle basis")
 parser.add_argument('--basis_step', type=int, default=40000, help="which checkpoint of basis to load")
+parser.add_argument('--option', type=str, default = 'multiple' ,choices=['single', 'multiple'])
 parser.add_argument('--lr', type=float, default=1e-2, help="learning rate")
 parser.add_argument('--total_iterations', type=int, default=5000, help="number of training iterations")
 parser.add_argument('--saving_frequency', type=int, default=5)
