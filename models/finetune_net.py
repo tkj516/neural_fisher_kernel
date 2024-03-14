@@ -6,6 +6,7 @@ from models.mobilenetv2 import MobileNetV2
 class Finetune_Net(nn.Module):
     def __init__(self, configs, pretrained_param, basis_param, **kwargs):
         super(Finetune_Net, self).__init__()
+        self.configs = configs
         self.base_model = MODEL_MAPPING[configs.model_name](**kwargs)
         for param in self.base_model.parameters():
             param.requires_grad = False
@@ -16,7 +17,7 @@ class Finetune_Net(nn.Module):
     def forward(self, x):
         for key in self.basis_param.keys():  # Iterate over the keys of the parameter subsets
             updated_param = self.pretrained_param[key] \
-            + self.principle_coeff(torch.cat([self.basis_param[key][i] for i in range(configs.basis_size)], -1)).squeeze(-1)
+            + self.principle_coeff(torch.cat([self.basis_param[key][i] for i in range(self.configs.basis_size)], -1)).squeeze(-1)
             self.base_model.state_dict()[key].data.copy_(updated_param)
 
         return self.base_model(x)
