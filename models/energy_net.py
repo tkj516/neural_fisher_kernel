@@ -8,11 +8,11 @@ MODEL_MAPPING = {
 # define other model mapping here
 }
 class EnergyNet(nn.Module):
-    def __init__(self, model_name, *args, **kwargs):
+    def __init__(self, model_name, **kwargs):
         super(EnergyNet, self).__init__()
         if model_name not in MODEL_MAPPING:
             raise ValueError(f"Unknown model {model_name}")
-        self.base_model = MODEL_MAPPING[model_name](*args,**kwargs)
+        self.base_model = MODEL_MAPPING[model_name](**kwargs)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """

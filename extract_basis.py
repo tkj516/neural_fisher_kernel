@@ -10,10 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
-import torchvision.transforms as T
-from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from torchvision.datasets import CIFAR10
 from tqdm import tqdm
 
 from utils.utils import clip_grad_norm_, compute_spectrum
@@ -21,7 +18,7 @@ from models.energy_net import energynet
 from data_utils import DataProcessing
 from fit import map_gradient, fisher_matrix_vector
 
-parser = argparse.ArgumentParser(description='main function')
+parser = argparse.ArgumentParser(description='main function of pinciple basis extraction')
 parser.add_argument('--dataset_path', type=str, default='/dccstor/mitibm_uq/data/')
 parser.add_argument('--root_path', type=str, default='/dccstor/mitibm_uq/neural_fisher_kernel/')
 parser.add_argument('--dataset_name', default='CIFAR10', type=str, help='dataset to run')
@@ -67,7 +64,7 @@ if __name__ == "__main__":
     params = dict(model.named_parameters())
     basis = {}
     for k in params.keys():
-        basis[k] = torch.rand(configs.batch_size, *params[k].shape, device=DEVICE)
+        basis[k] = torch.rand(configs.basis_size, *params[k].shape, device=DEVICE)
 
     # pool = multiprocessing.Pool()
     step = 0
