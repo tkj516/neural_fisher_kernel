@@ -23,8 +23,8 @@ class EnergyNet(nn.Module):
         return torch.sum(probs.detach() * out, dim=-1)
 
 def energynet(model_name, model_path, pretrained=False, device="cpu", **kwargs):
-    model = EnergyNet(model_name, **kwargs).base_model
+    model = EnergyNet(model_name, **kwargs)
     if pretrained:
         state_dict = torch.load(model_path, map_location=device)
-        model.load_state_dict(state_dict)
+        model.base_model.load_state_dict(state_dict)
     return model
