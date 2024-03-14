@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path):
+def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path, device):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=configs.lr, momentum=0.9)
     for epoch in range(configs.total_iterations):
@@ -13,7 +13,7 @@ def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path
         model.train()
         for i, data in enumerate(train_dataloader):
             inputs, labels = data
-            inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
+            inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             # forward + backward + optimize
             outputs = model(inputs)
@@ -45,7 +45,7 @@ def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path
         with torch.no_grad():
             for data in val_dataloader:
                 images, labels = data
-                inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
+                inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(images)
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)

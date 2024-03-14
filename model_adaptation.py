@@ -66,7 +66,7 @@ if __name__ == "__main__":
         f'_target_dataset_{configs.finetune_dataset_name}'
         f'_basis_size_{configs.basis_size}'
     )
-    train_finetune(configs, model, trainloader, valloader, saving_path)
+    train_finetune(configs, model, trainloader, valloader, saving_path, DEVICE)
 
 
 
