@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(description='main function of model adaptation'
 parser.add_argument('--dataset_path', type=str, default='/dccstor/mitibm_uq/data/')
 parser.add_argument('--root_path', type=str, default='/dccstor/mitibm_uq/neural_fisher_kernel/')
 parser.add_argument('--dataset_name', default='CIFAR10', type=str, help='dataset to run')
-parser.add_argument('--finetune_dataset_name', default='MNIST', type=str, help='target dataset model adapt to')
+parser.add_argument('--finetune_dataset_name', default='SVHN', type=str, help='target dataset model adapt to')
 parser.add_argument('--model_name', default='MobileNet', type=str, help='model to train')
 parser.add_argument('--batch_size', type=int, default=32, help="batch_size for training the model")
 parser.add_argument('--basis_size', type=int, default=20, help="number of principle basis")

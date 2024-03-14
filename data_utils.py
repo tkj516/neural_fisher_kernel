@@ -19,7 +19,7 @@ class DataProcessing:
         self.path = self.root_path + dataset_name
         self.augmentation = augmentation
 
-        if self.dataset_name == 'CIFAR10' or self.dataset_name == 'CIFAR100':
+        if self.dataset_name in ['CIFAR10', 'CIFAR100', 'SVHN']:
             self.transform_train = transforms.Compose([
                 transforms.RandomCrop(32, padding=4),
                 transforms.RandomHorizontalFlip(),
@@ -73,6 +73,9 @@ class DataProcessing:
         elif self.dataset_name == 'CIFAR100':
             dataset_train = datasets.CIFAR100(root=self.path, train=True, download=True, transform=self.transform_train)
             testset = datasets.CIFAR100(root=self.path, train=False, download=True, transform=self.transform_test)
+        elif self.dataset_name == 'SVHN':
+            dataset_train = datasets.SVHN(root=self.path, split='train', download=True, transform=self.transform_train)
+            testset = datasets.SVHN(root=self.path,  split='test', download=True, transform=self.transform_test)
         elif self.dataset_name == 'MNIST':
             dataset_train = datasets.MNIST(root=self.path, train=True, download=True, transform=self.transform_train)
             testset = datasets.MNIST(root=self.path, train=False, download=True, transform=self.transform_test)
