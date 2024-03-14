@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from models.finetune_net import finetune_net
+from models.finetune_net import finetunenet
 from data_utils import DataProcessing
 from train_finetune import train_finetune
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         f'_option_{configs.option}'
     )
     basis_path = os.path.join(basis_path, f'basis_{configs.basis_step}.pt')
-    model = finetune_net(configs, model_path, basis_path, DEVICE).to(DEVICE)
+    model = finetunenet(configs, model_path, basis_path, DEVICE).to(DEVICE)
     model.train()
 
     saving_path = os.path.join(
