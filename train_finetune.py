@@ -36,6 +36,7 @@ def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path
             # print statistics
             running_loss += loss.item()
             if (i + 1) % 100 == 0:  # print every 100 mini-batches
+                print("Learnable Weights", model.eps.data)
                 print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / 100))
                 epoch_loss += running_loss
                 running_loss = 0.0
@@ -59,7 +60,7 @@ def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path
         model.eval()
         with torch.no_grad():
             for data in val_dataloader:
-                images, labels = data
+                inputs, labels = data
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(images)
                 _, predicted = torch.max(outputs.data, 1)
