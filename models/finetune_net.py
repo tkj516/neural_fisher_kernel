@@ -18,11 +18,11 @@ def create_finetune_net(base_model):
             )
             self.eps = nn.Parameter(torch.rand(self.num_basis, requires_grad=True))
         def update_weights(self) -> None:
-            new_state_dict = copy.deepcopy(self.pretrained_param)
+            new_state_dict = copy.deepcopy(self.pretrained_param).cpu()
             for key, value in self.basis_param.items():
                 if key in self.state_dict():
                     new_state_dict[key] += torch.einsum(
-                        "l...,l->...", value, self.eps.detach().cpu()
+                        "l...,l->...", value.cpu(), self.eps.detach().cpu()
                     )
             self.load_state_dict(new_state_dict)
         def forward(self, x: torch.Tensor) -> torch.Tensor:
