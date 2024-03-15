@@ -29,6 +29,8 @@ def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path
 
         if epoch % configs.saving_frequency == 0:
             checkpoint_name = "-".join(["checkpoint", str(epoch) + ".pt"])
+            if not os.path.exists(saving_path):
+                os.makedirs(saving_path)
             torch.save(
                 {
                     "epoch": epoch,
