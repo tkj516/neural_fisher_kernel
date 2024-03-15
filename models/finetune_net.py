@@ -20,8 +20,10 @@ class Finetune_Net(nn.Module):
             self.updated_param[key] = self.pretrained_param[key] \
             + self.principle_coeff(torch.stack([self.basis_param[key][i] for i in range(self.configs.basis_size)], -1)).squeeze(-1)
         self.base_model.load_state_dict(self.updated_param, strict=False)
+        output = self.base_model(x)
+        self.base_model.load_state_dict(self.pretrained_param, strict=False)
 
-        return self.base_model(x)
+        return output
 
 def finetunenet(configs, model_path, basis_path, device, **kwargs):
     pretrained_param = torch.load(model_path, map_location=device)
