@@ -6,7 +6,9 @@ import torch.optim as optim
 
 def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path, device):
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=configs.lr, momentum=0.9)
+    optimizer_classifier = torch.optim.AdamW(model.new_classifier.parameters(), lr=configs.lr_classifier)
+    model.update_weights()
+    model.to(device)
     for epoch in range(configs.total_iterations):
         epoch_loss = 0.0
         running_loss = 0.0
@@ -14,12 +16,21 @@ def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path
         for i, data in enumerate(train_dataloader):
             inputs, labels = data
             inputs, labels = inputs.to(device), labels.to(device)
-            optimizer.zero_grad()
+            optimizer_classifier.zero_grad()
             # forward + backward + optimize
             outputs = model(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
-            optimizer.step()
+            # manually update the parameter of eps
+            eps_grad = 0
+            for key, param in model.named_parameters():
+                if key in model.basis_param:
+                    eps_grad += torch.einsum(
+                        "l...,...->l", model.basis_param[key], param.grad.cpu()
+                    )
+            model.eps.data = model.eps.data - configs.lr_eps * eps_grad.to(model.eps.device)
+            optimizer_classifier.step()
+            model.update_weights()
             # print statistics
             running_loss += loss.item()
             if (i + 1) % 100 == 0:  # print every 100 mini-batches

@@ -3,28 +3,39 @@ import torch.nn as nn
 from models.energy_net import MODEL_MAPPING
 from models.mobilenetv2 import MobileNetV2
 
-class Finetune_Net(nn.Module):
-    def __init__(self, configs, pretrained_param, basis_param, **kwargs):
-        super(Finetune_Net, self).__init__()
-        self.configs = configs
-        self.base_model = MODEL_MAPPING[configs.model_name](**kwargs)
-        #for param in self.base_model.parameters():
-        #    param.requires_grad = False
-        self.pretrained_param = pretrained_param
-        self.basis_param = basis_param
-        self.principle_coeff = nn.Linear(configs.basis_size, 1, bias=False)
-        self.updated_param = {key: self.pretrained_param[key].clone() for key in self.pretrained_param.keys()}
+def create_finetune_net(base_model):
+    class FinetuneNet(base_model):
+        def __init__(self, configs, pretrained_param, basis_param):
+            super(FinetuneNet, self).__init__(configs.num_classes, configs.width_mult)
+            self.num_basis = configs.basis_size
+            self.pretrained_param = pretrained_param
+            self.basis_param = basis_param
+            self.classifier = None
+            self.new_classifier = nn.Sequential(
+                nn.Dropout(0.2),
+                nn.Linear(self.last_channel, configs.num_classes),
+            )
+            self.eps = nn.Parameter(torch.rand(self.num_basis, requires_grad=True))
+        def update_weights(self) -> None:
+            new_state_dict = self.pretrained_param.clone()
+            for key, value in self.basis_param.items():
+                if key in self.state_dict():
+                    new_state_dict[key] += torch.einsum(
+                        "l...,l->...", value, self.eps.detach().cpu()
+                    )
+            self.load_state_dict(new_state_dict)
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            x = self.features(x)
+            x = x.mean([2, 3])
+            x = self.new_classifier(x)
+            return x
 
-    def forward(self, x):
-        for key in self.basis_param.keys():  # Iterate over the keys of the parameter subsets
-            self.updated_param[key] = self.pretrained_param[key] \
-            + self.principle_coeff(torch.stack([self.basis_param[key][i] for i in range(self.configs.basis_size)], -1)).squeeze(-1)
-        self.base_model.load_state_dict(self.updated_param, strict=False)
+    return FinetuneNet
 
-        return self.base_model(x)
 
 def finetunenet(configs, model_path, basis_path, device, **kwargs):
     pretrained_param = torch.load(model_path, map_location=device)
     basis_param = torch.load(basis_path, map_location=device)
-    model = Finetune_Net(configs, pretrained_param, basis_param, **kwargs)
+    FinetuneNet = create_finetune_net(MODEL_MAPPING[model_name])
+    model = FinetuneNet(configs, pretrained_param, basis_param)
     return model
