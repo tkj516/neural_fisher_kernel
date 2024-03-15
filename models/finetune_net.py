@@ -5,6 +5,7 @@ import functools
 
 from models.energy_net import MODEL_MAPPING
 from models.mobilenetv2 import MobileNetV2
+from utils.utils import move_to_device
 
 def create_finetune_net(base_model):
     class FinetuneNet(base_model):

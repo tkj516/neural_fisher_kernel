@@ -7,6 +7,9 @@ from torch.utils._foreach_utils import (
     _has_foreach_support,
 )
 
+def move_to_device(item, device):
+    return (item[0], item[1].to(device))
+
 def compute_spectrum(basis_size, basis):
     spectrum = [0] * basis_size
     for k in basis.keys():
