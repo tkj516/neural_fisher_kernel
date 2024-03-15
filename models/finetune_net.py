@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import copy
 from models.energy_net import MODEL_MAPPING
 from models.mobilenetv2 import MobileNetV2
 
@@ -17,7 +18,7 @@ def create_finetune_net(base_model):
             )
             self.eps = nn.Parameter(torch.rand(self.num_basis, requires_grad=True))
         def update_weights(self) -> None:
-            new_state_dict = self.pretrained_param.clone()
+            new_state_dict = copy.deepcopy(self.pretrained_param)
             for key, value in self.basis_param.items():
                 if key in self.state_dict():
                     new_state_dict[key] += torch.einsum(
