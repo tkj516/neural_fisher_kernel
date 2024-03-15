@@ -28,6 +28,7 @@ parser.add_argument('--basis_size', type=int, default=20, help="number of princi
 parser.add_argument('--lr', type=float, default=1e-2, help="learning rate")
 parser.add_argument('--total_iterations', type=int, default=5000, help="number of training iterations")
 parser.add_argument('--option', type=str, default = 'multiple' ,choices=['single', 'multiple'])
+parser.add_argument('--layer_list', nargs='*', dest='layer_list', help='list of layers we take gradient',type=str)
 args = parser.parse_args()
 
 configs_dict = {
@@ -61,7 +62,14 @@ if __name__ == "__main__":
     )
 
     # Create the basis
-    params = dict(model.named_parameters())
+    params_full = dict(model.named_parameters())
+    params = {}
+    layer_list = configs.layer_list
+    # Iterate and select items
+    for key in layer_list:
+        if key in params_full:
+            params[key] = params_full[key]
+
     basis = {}
     for k in params.keys():
         basis[k] = torch.rand(configs.basis_size, *params[k].shape, device=DEVICE)
