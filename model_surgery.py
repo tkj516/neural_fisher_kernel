@@ -92,8 +92,9 @@ def surgerized(pretrained=False, device="cpu", **kwargs):
         pretrained_state_dict = {
             k: v for k, v in state_dict.items() if k in model.state_dict()
         }
-        state_dict.update(pretrained_state_dict)
-        model.load_state_dict(state_dict)
+        model_state_dict = model.state_dict()
+        model_state_dict.update(pretrained_state_dict)
+        model.load_state_dict(model_state_dict)
     return model
 
 
@@ -120,7 +121,7 @@ if __name__ == "__main__":
         pin_memory=True,
     )
 
-    model = surgerized(num_basis=20)
+    model = surgerized(pretrained=True, num_basis=20)
     # Cache state dict for safekeeping
     model.cache_state_dict()
 
