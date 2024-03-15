@@ -13,8 +13,10 @@ def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path
     for epoch in range(configs.total_iterations):
         epoch_loss = 0.0
         running_loss = 0.0
+        iterations = 0
         model.train()
         for i, data in enumerate(train_dataloader):
+            iterations += 1
             inputs, labels = data
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer_classifier.zero_grad()
@@ -35,12 +37,13 @@ def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path
             model.update_weights()
             # print statistics
             running_loss += loss.item()
-            if (i + 1) % 100 == 0:  # print every 100 mini-batches
-                print("Learnable Weights", model.eps.data)
-                print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / 100))
-                epoch_loss += running_loss
+            epoch_loss += loss.item()
+            if (i + 1) % 500 == 0:  # print every 100 mini-batches
+                print("Learnable Weights", model.eps.data.tolist())
+                print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / 500))
                 running_loss = 0.0
 
+        print("%d loss: %.3f" % (epoch + 1, epoch_loss / iterations))
         if epoch % configs.saving_frequency == 0:
             checkpoint_name = "-".join(["checkpoint", str(epoch) + ".pt"])
             if not os.path.exists(saving_path):
@@ -49,7 +52,7 @@ def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path
                 {
                     "epoch": epoch,
                     "model_state_dict": model.state_dict(),
-                    "loss": epoch_loss,
+                    "loss": epoch_loss / iterations,
                 },
                 os.path.join(saving_path, checkpoint_name),
             )
@@ -62,7 +65,7 @@ def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path
             for data in val_dataloader:
                 inputs, labels = data
                 inputs, labels = inputs.to(device), labels.to(device)
-                outputs = model(images)
+                outputs = model(inputs)
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
