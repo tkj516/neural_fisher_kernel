@@ -34,7 +34,7 @@ def create_finetune_net(base_model):
     return FinetuneNet
 
 
-def finetunenet(configs, model_path, basis_path, **kwargs):
+def finetunenet(configs, model_path, basis_path, device):
     pretrained_param = torch.load(model_path, map_location=device)
     basis_param = torch.load(basis_path, map_location=device)
     FinetuneNet = create_finetune_net(MODEL_MAPPING[configs.model_name])
