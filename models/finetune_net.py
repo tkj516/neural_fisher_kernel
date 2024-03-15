@@ -6,8 +6,8 @@ from models.mobilenetv2 import MobileNetV2
 
 def create_finetune_net(base_model):
     class FinetuneNet(base_model):
-        def __init__(self, configs, pretrained_param, basis_param, **kwargs):
-            super(FinetuneNet, self).__init__(configs.num_classes, configs.width_mult, **kwargs)
+        def __init__(self, configs, pretrained_param, basis_param):
+            super(FinetuneNet, self).__init__(configs.num_classes, configs.width_mult)
             self.num_basis = configs.basis_size
             self.pretrained_param = pretrained_param
             self.basis_param = basis_param
@@ -38,5 +38,5 @@ def finetunenet(configs, model_path, basis_path, device):
     pretrained_param = torch.load(model_path, map_location=device)
     basis_param = torch.load(basis_path, map_location=device)
     FinetuneNet = create_finetune_net(MODEL_MAPPING[configs.model_name])
-    model = FinetuneNet(configs, pretrained_param, basis_param, **kwargs)
+    model = FinetuneNet(configs, pretrained_param, basis_param)
     return model
