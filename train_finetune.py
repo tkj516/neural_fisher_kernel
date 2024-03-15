@@ -7,8 +7,8 @@ import torch.optim as optim
 def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path, device):
     criterion = nn.CrossEntropyLoss()
     optimizer_classifier = torch.optim.AdamW(model.new_classifier.parameters(), lr=configs.lr_classifier)
-    model.update_weights()
     model.to(device)
+    model.update_weights()
     for epoch in range(configs.total_iterations):
         epoch_loss = 0.0
         running_loss = 0.0
