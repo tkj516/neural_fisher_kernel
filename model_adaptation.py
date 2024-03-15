@@ -31,7 +31,8 @@ args = parser.parse_args()
 
 configs_dict = {
     'num_classes': 10,
-    'width_mult': 1.0
+    'width_mult': 1.0,
+    'gradient_clip': 100.0,
 }
 configs = SimpleNamespace(**configs_dict, **vars(args))
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

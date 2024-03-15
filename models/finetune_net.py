@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import copy
+import functools
+
 from models.energy_net import MODEL_MAPPING
 from models.mobilenetv2 import MobileNetV2
 
@@ -17,13 +19,36 @@ def create_finetune_net(base_model):
                 nn.Linear(self.last_channel, configs.num_classes),
             )
             self.eps = nn.Parameter(torch.rand(self.num_basis, requires_grad=True))
+
+        def cache_state_dict(self):
+            if hasattr(self, "cached_state_dict"):
+                raise ValueError("Cached state dict already exists.")
+
+            self.cached_state_dict = [
+                copy.deepcopy(
+                    dict(
+                        map(
+                            functools.partial(move_to_device, device="cpu"),
+                            self.pretrained_param().items(),
+                        )
+                    )
+                )
+            ]
         def update_weights(self) -> None:
-            new_state_dict = copy.deepcopy(self.pretrained_param).cpu()
+            if not hasattr(self, "cached_state_dict"):
+                raise ValueError(
+                    "Cached state dict not found. Call cache_state_dict first."
+                )
+            cached_state_dict = self.cached_state_dict[0]
+            new_state_dict = self.state_dict()
             for key, value in self.basis_param.items():
                 if key in self.state_dict():
-                    new_state_dict[key] += torch.einsum(
-                        "l...,l->...", value.cpu(), self.eps.detach().cpu()
+                    new_state_dict[key] = cached_state_dict[
+                                              key
+                                          ].detach().cpu() + torch.einsum(
+                        "l...,l->...", value, self.eps.detach().cpu()
                     )
+            # Store the current state dict to use in the next iteration
             self.load_state_dict(new_state_dict)
         def forward(self, x: torch.Tensor) -> torch.Tensor:
             x = self.features(x)
@@ -35,8 +60,8 @@ def create_finetune_net(base_model):
 
 
 def finetunenet(configs, model_path, basis_path, device):
-    pretrained_param = torch.load(model_path, map_location=device)
-    basis_param = torch.load(basis_path, map_location=device)
+    pretrained_param = torch.load(model_path, map_location="cpu")
+    basis_param = torch.load(basis_path, map_location="cpu")
     FinetuneNet = create_finetune_net(MODEL_MAPPING[configs.model_name])
     model = FinetuneNet(configs, pretrained_param, basis_param)
     return model

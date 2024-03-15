@@ -7,8 +7,9 @@ import torch.optim as optim
 def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path, device):
     criterion = nn.CrossEntropyLoss()
     optimizer_classifier = torch.optim.AdamW(model.new_classifier.parameters(), lr=configs.lr_classifier)
-    model.to(device)
+    model.cache_state_dict()
     model.update_weights()
+    model.to(device)
     for epoch in range(configs.total_iterations):
         epoch_loss = 0.0
         running_loss = 0.0
@@ -21,6 +22,7 @@ def train_finetune(configs, model, train_dataloader, val_dataloader, saving_path
             outputs = model(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), configs.gradient_clip)
             # manually update the parameter of eps
             eps_grad = 0
             for key, param in model.named_parameters():
