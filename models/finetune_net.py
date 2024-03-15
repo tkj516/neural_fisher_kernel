@@ -30,7 +30,7 @@ def create_finetune_net(base_model):
                     dict(
                         map(
                             functools.partial(move_to_device, device="cpu"),
-                            self.pretrained_param().items(),
+                            self.pretrained_param.items(),
                         )
                     )
                 )
