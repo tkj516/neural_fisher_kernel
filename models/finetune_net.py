@@ -63,6 +63,8 @@ def create_finetune_net(base_model):
 def finetunenet(configs, model_path, basis_path, device):
     pretrained_param = torch.load(model_path, map_location="cpu")
     basis_param = torch.load(basis_path, map_location="cpu")
+    for key in basis_param.keys():
+        basis_param[key] = basis_param[key]/torch.norm(basis_param[key])
     FinetuneNet = create_finetune_net(MODEL_MAPPING[configs.model_name])
     model = FinetuneNet(configs, pretrained_param, basis_param)
     return model
