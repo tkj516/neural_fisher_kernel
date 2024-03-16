@@ -42,13 +42,16 @@ def create_finetune_net(base_model):
                 )
             cached_state_dict = self.cached_state_dict[0]
             new_state_dict = self.state_dict()
-            for key, value in self.basis_param.items():
-                if key in self.state_dict():
+            for key, value in self.state_dict.items():
+                if key in self.basis_param():
                     new_state_dict[key] = cached_state_dict[
                                               key
                                           ].detach().cpu() + torch.einsum(
-                        "l...,l->...", value, self.eps.detach().cpu()
+                        "l...,l->...", self.basis_param[key], self.eps.detach().cpu()
                     )
+                else:
+                    if key in self.cached_state_dict():
+                        new_state_dict[key] = cached_state_dict[key].detach().cpu()
             # Store the current state dict to use in the next iteration
             self.load_state_dict(new_state_dict)
         def forward(self, x: torch.Tensor) -> torch.Tensor:
