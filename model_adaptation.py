@@ -20,9 +20,10 @@ parser.add_argument('--dataset_name', default='CIFAR10', type=str, help='dataset
 parser.add_argument('--finetune_dataset_name', default='SVHN', type=str, help='target dataset model adapt to')
 parser.add_argument('--model_name', default='MobileNet', type=str, help='model to train')
 parser.add_argument('--batch_size', type=int, default=32, help="batch_size for training the model")
-parser.add_argument('--basis_size', type=int, default=20, help="number of principle basis")
-parser.add_argument('--basis_step', type=int, default=40000, help="which checkpoint of basis to load")
+parser.add_argument('--basis_size', type=int, default=100, help="number of principle basis")
+parser.add_argument('--basis_step', type=int, default=50000, help="which checkpoint of basis to load")
 parser.add_argument('--option', type=str, default = 'multiple' ,choices=['single', 'multiple'])
+parser.add_argument('--layer_list', nargs='*', dest='layer_list', help='list of layers we take gradient',type=str)
 parser.add_argument('--lr_classifier', type=float, default=1e-3, help="learning rate for classifier")
 parser.add_argument('--lr_eps', type=float, default=1e-2, help="learning rate for learnable weights eps")
 parser.add_argument('--total_iterations', type=int, default=5000, help="number of training iterations")
@@ -57,6 +58,7 @@ if __name__ == "__main__":
         f'_dataset_{configs.dataset_name}'
         f'_basis_size_{configs.basis_size}'
         f'_option_{configs.option}'
+        f'_layer_{layer_names}'
     )
     basis_path = os.path.join(basis_path, f'basis_{configs.basis_step}.pt')
     model = finetunenet(configs, model_path, basis_path, DEVICE).to(DEVICE)
