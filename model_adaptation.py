@@ -52,6 +52,7 @@ if __name__ == "__main__":
         model_path = configs.dataset_path+'state_dicts/mobilenet_v2.pt'
     else:
         raise NotImplementedError
+    layer_names = '_'.join(configs.layer_list)
     basis_path = os.path.join(
         configs.root_path + 'checkpoints',
         f'model_{configs.model_name}'
