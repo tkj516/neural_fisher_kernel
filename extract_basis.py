@@ -53,12 +53,14 @@ if __name__ == "__main__":
         raise NotImplementedError
     model = energynet(configs.model_name, model_path, pretrained=True).to(DEVICE)
     model.eval()
+    layer_names = '_'.join(configs.layer_list)
     saving_path = os.path.join(
         configs.root_path+'checkpoints',
         f'model_{configs.model_name}'
         f'_dataset_{configs.dataset_name}'
         f'_basis_size_{configs.basis_size}'
         f'_option_{configs.option}'
+        f'_layer_{layer_names}'
     )
 
     # Create the basis
@@ -66,9 +68,11 @@ if __name__ == "__main__":
     params = {}
     layer_list = configs.layer_list
     # Iterate and select items
-    for key in layer_list:
-        if key in params_full:
+    for key in params_full.keys():
+        if any(sub_key in key for sub_key in layer_list):
             params[key] = params_full[key]
+
+    print(params.keys())
 
     basis = {}
     for k in params.keys():
